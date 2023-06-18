@@ -1,0 +1,32 @@
+{
+  "name": "passport-steam-openid",
+  "version": "0.0.1",
+  "description": "Passport strategy for authenticating with steam openid without the use of 3rd party openid packages.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npx tsc",
+    "format": "npx prettier --write \"src/**/*.ts\"",
+    "lint": "npx eslint \"{src,test}/**/*.ts\" --fix",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "glencoco",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.4.0",
+    "passport": "^0.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.3.1",
+    "@types/passport": "^1.0.12",
+    "@typescript-eslint/eslint-plugin": "^5.59.11",
+    "@typescript-eslint/parser": "^5.59.11",
+    "eslint": "^8.43.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-sonarjs": "^0.19.0",
+    "prettier": "^2.8.8",
+    "typescript": "^5.1.3"
+  }
+}
