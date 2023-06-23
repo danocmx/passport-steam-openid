@@ -1,0 +1,29 @@
+name: Release
+on: 
+  push:
+    branches:
+      master
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        name: Checkout repository
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+        name: Setup Node.JS
+
+      - name: Install packages
+        run: npm ci
+      
+      - run: npm run build
+        name: Compile library
+
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npx semantic-release
