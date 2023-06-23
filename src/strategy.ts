@@ -174,7 +174,7 @@ export class SteamOpenIdStrategy<
    * @returns false, if error is not retriable
    *  and should be handled by the app.
    */
-  private isRetryableError(err: unknown) {
+  protected isRetryableError(err: unknown) {
     return (
       err instanceof SteamOpenIdError &&
       err.code == SteamOpenIdErrorType.InvalidMode
