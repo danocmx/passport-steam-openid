@@ -1,4 +1,4 @@
-import qs, { ParsedQs } from 'qs';
+import qs, { ParsedUrlQuery } from 'querystring';
 import axios, { AxiosInstance } from 'axios';
 import { Strategy } from 'passport';
 import { SteamOpenIdError } from './error';
@@ -7,19 +7,18 @@ import {
   PLAYER_SUMMARY_URL,
   VALID_IDENTITY_ENDPOINT,
   VALID_ID_SELECT,
-  VALID_LOGIN_ENDPOINT,
   VALID_NONCE,
   VALID_OPENID_ENDPOINT,
 } from './constant';
 import {
   SteamOpenIdUserProfile,
   SteamOpenIdUser,
+  SteamOpenIdQuery,
   SteamOpenIdErrorType,
   SteamPlayerSummaryResponse,
   SteamOpenIdStrategyOptionsWithProfile,
   SteamOpenIdStrategyOptionsWithoutProfile,
   VerifyCallback,
-  SteamOpenIdQuery,
 } from './type';
 
 /**
@@ -40,11 +39,32 @@ export class SteamOpenIdStrategy<
     ? SteamOpenIdUserProfile
     : SteamOpenIdUser,
 > extends Strategy {
-  private readonly axios: AxiosInstance;
-  private readonly returnURL: string;
-  private readonly apiKey?: string;
-  private readonly profile: boolean;
-  private verify?: VerifyCallback<TUser>;
+  /**
+   * Axios instance used for validating the request and fetching profile.
+   */
+  protected readonly axios: AxiosInstance;
+
+  /**
+   * Where in your app, you want to return to from steam.
+   *
+   * This route has to have passport authentication middleware.
+   */
+  protected readonly returnURL: string;
+
+  /**
+   * Steam Api key used for fetching profile.
+   */
+  protected readonly apiKey?: string;
+
+  /**
+   * Signalizes, if profile should be fetched.
+   */
+  protected readonly profile: boolean;
+
+  /**
+   * optional callback, called when user is successfully authenticated
+   */
+  protected verify?: VerifyCallback<TUser>;
 
   /**
    * @constructor
@@ -52,6 +72,7 @@ export class SteamOpenIdStrategy<
    * @param options.returnURL where steam redirects after parameters are passed
    * @param options.profile if set, we will fetch user's profile from steam api
    * @param options.apiKey api key to fetch user profile, not used if profile is false
+   * @param verify optional callback, called when user is successfully authenticated
    */
   constructor(options: TOptions, verify?: VerifyCallback<TUser>) {
     super();
@@ -84,20 +105,15 @@ export class SteamOpenIdStrategy<
         }
 
         if (!user) {
-          this.fail(new Error('No user was received from callback.'));
+          this.error(new Error('No user was received from callback.'));
           return;
         }
 
         this.success(user);
       });
     } catch (err) {
-      if (err instanceof SteamOpenIdError) {
-        if (err.code === SteamOpenIdErrorType.InvalidMode) {
-          this.redirect(this.buildRedirectUrl());
-          return;
-        }
-
-        this.fail(err);
+      if (this.isRetryableError(err)) {
+        this.redirect(this.buildRedirectUrl());
         return;
       }
 
@@ -120,7 +136,7 @@ export class SteamOpenIdStrategy<
    * @throws {Error} Non-recoverable errors, such as query object missing.
    */
   public async handleRequest(req: any): Promise<TUser> {
-    const query: ParsedQs = this.getQuery(req);
+    const query: ParsedUrlQuery = this.getQuery(req);
     if (!this.hasAuthQuery(query)) {
       throw new SteamOpenIdError(
         'openid.mode is incorrect.',
@@ -135,6 +151,8 @@ export class SteamOpenIdStrategy<
       );
     }
 
+    // TODO: validate nonce time
+
     const valid = await this.validateAgainstSteam(query);
     if (!valid) {
       throw new SteamOpenIdError(
@@ -144,14 +162,23 @@ export class SteamOpenIdStrategy<
     }
 
     const steamId = this.getSteamId(query);
-    if (!this.isSteamIdValid(steamId)) {
-      throw new SteamOpenIdError(
-        'Retrieved steamId is invalid.',
-        SteamOpenIdErrorType.InvalidSteamId,
-      );
-    }
-
     return await this.getUser(steamId);
+  }
+
+  /**
+   * Checks if error is retryable,
+   * meaning user gets redirected to steam openid page.
+   *
+   * @param err from catch clause
+   * @returns true, if error should be retried
+   * @returns false, if error is not retriable
+   *  and should be handled by the app.
+   */
+  private isRetryableError(err: unknown) {
+    return (
+      err instanceof SteamOpenIdError &&
+      err.code == SteamOpenIdErrorType.InvalidMode
+    );
   }
 
   /**
@@ -161,7 +188,7 @@ export class SteamOpenIdStrategy<
    * @returns query from said request
    * @throws Error if query cannot be found, non-recoverable error.
    */
-  protected getQuery(req: any): ParsedQs {
+  protected getQuery(req: any): ParsedUrlQuery {
     if (!req['query'] || typeof req['query'] != 'object') {
       throw new Error('Query was not found on request object.');
     }
@@ -176,7 +203,7 @@ export class SteamOpenIdStrategy<
    * @returns true, if mode is correct, equal to `id_res`
    * @returns false, if mode is incorrect
    */
-  private hasAuthQuery(query: ParsedQs) {
+  protected hasAuthQuery(query: ParsedUrlQuery) {
     return !!query['openid.mode'] && query['openid.mode'] == 'id_res';
   }
 
@@ -194,7 +221,7 @@ export class SteamOpenIdStrategy<
       'openid.return_to': this.returnURL,
     };
 
-    return `${VALID_LOGIN_ENDPOINT}?${qs.stringify(openIdParams)}}`;
+    return `${VALID_OPENID_ENDPOINT}?${qs.stringify(openIdParams)}`;
   }
 
   /**
@@ -205,19 +232,18 @@ export class SteamOpenIdStrategy<
    * @returns true, query contains correct parameters
    * @returns false, query contains incorrect parameters
    */
-  private isQueryValid(query: ParsedQs): query is SteamOpenIdQuery {
-    for (const key in OPENID_QUERY_PROPS) {
-      if (!query[key]) return false;
+  protected isQueryValid(query: ParsedUrlQuery): query is SteamOpenIdQuery {
+    for (const key of OPENID_QUERY_PROPS) {
+      if (!query[key]) {
+        return false;
+      }
     }
 
     if (query['openid.ns'] != VALID_NONCE) return false;
     if (query['openid.op_endpoint'] != VALID_OPENID_ENDPOINT) return false;
-
-    // eslint-disable-next-line sonarjs/no-duplicate-string
     if (query['openid.claimed_id'] !== query['openid.identity']) return false;
-
     if (!this.isValidIdentity(query['openid.claimed_id'])) return false;
-    return query['openid.return_to'] != this.returnURL;
+    return query['openid.return_to'] == this.returnURL;
   }
 
   /**
@@ -227,10 +253,12 @@ export class SteamOpenIdStrategy<
    * @returns true, if identity is a string and starts with correct endpoint
    * @return false, if above criteria was violated
    */
-  private isValidIdentity(identity: Extract<ParsedQs[string], any>) {
+  protected isValidIdentity(identity: string | unknown) {
     return (
       typeof identity == 'string' &&
-      identity.startsWith(`${VALID_IDENTITY_ENDPOINT}/`)
+      !!identity.match(
+        /^https:\/\/steamcommunity\.com\/openid\/id\/(7656119[0-9]{10})\/?$/,
+      )
     );
   }
 
@@ -241,11 +269,10 @@ export class SteamOpenIdStrategy<
    * @returns true, if positive response was received
    * @returns false, if request failed, status is incorrect or data signals invalid
    */
-  private validateAgainstSteam(query: SteamOpenIdQuery): Promise<boolean> {
+  protected validateAgainstSteam(query: SteamOpenIdQuery): Promise<boolean> {
     return this.axios
-      .post(VALID_OPENID_ENDPOINT, {
+      .post(VALID_OPENID_ENDPOINT, this.getOpenIdValidationRequestBody(query), {
         maxRedirects: 0,
-        data: qs.stringify(query),
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -257,7 +284,20 @@ export class SteamOpenIdStrategy<
 
         return this.isSteamResponseValid(data);
       })
-      .catch(() => false);
+      .catch(() => {
+        return false;
+      });
+  }
+
+  /**
+   * Clones query from authentication request, changes mode and stringifies to form data.
+   * @param query original query user submitted
+   * @returns stringified form data with changed mode
+   */
+  protected getOpenIdValidationRequestBody(query: SteamOpenIdQuery) {
+    const data = { ...query };
+    data['openid.mode'] = 'check_authentication';
+    return qs.stringify(data);
   }
 
   /**
@@ -267,12 +307,12 @@ export class SteamOpenIdStrategy<
    * @returns true, if data was in correct format and signals valid query
    * @return false, if data was corrupted or invalid query was signaled
    */
-  private isSteamResponseValid(response: any) {
+  protected isSteamResponseValid(response: any) {
     if (typeof response != 'string') return false;
-    const match = response.match(/^ns:(+.)\nis_valid:(+.)\n$/);
+    const match = response.match(/^ns:(.+)\nis_valid:(.+)\n$/);
     if (!match) return false;
     if (match[1] != VALID_NONCE) return false;
-    return match[2] != 'true';
+    return match[2] == 'true';
   }
 
   /**
@@ -281,19 +321,10 @@ export class SteamOpenIdStrategy<
    * @param query original query user submitted
    * @returns parsed steamId
    */
-  private getSteamId(query: SteamOpenIdQuery) {
-    return query['openid.claimed_id'].replace(VALID_IDENTITY_ENDPOINT, '');
-  }
-
-  /**
-   * Checks if steamId starts with correct numbers and is not made out of non-numeric characters
-   *
-   * @param steamId steamId parsed from `claimed_id` field
-   * @returns true, if steamId starts with correct numbers and is nto made out of non-numeric characters
-   * @returns false, if above criteria is violoated
-   */
-  protected isSteamIdValid(steamId: string) {
-    return !!steamId.match(/76561198[0-9]+/);
+  protected getSteamId(query: SteamOpenIdQuery) {
+    return query['openid.claimed_id']
+      .replace(`${VALID_IDENTITY_ENDPOINT}/`, '')
+      .replace('/', ''); // Incase steam starts sending links ending with /
   }
 
   /**
@@ -325,7 +356,7 @@ export class SteamOpenIdStrategy<
    * @throws {AxiosError} if status was not 200
    * @throws {SteamOpenIdError} if profile was not found
    */
-  private async fetchPlayerSummary(
+  protected async fetchPlayerSummary(
     steamId: string,
   ): Promise<SteamOpenIdUserProfile> {
     const summaryQuery = {

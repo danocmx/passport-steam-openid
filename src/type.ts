@@ -1,7 +1,6 @@
 import { DoneCallback } from 'passport';
 
 export type BaseSteamOpenIdStrategyOptions = {
-  profile: boolean;
   returnURL: string;
 };
 
