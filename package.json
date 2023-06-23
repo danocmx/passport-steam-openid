@@ -1,6 +1,6 @@
 {
   "name": "passport-steam-openid",
-  "version": "0.0.1",
+  "version": "0.0.0-development",
   "description": "Passport strategy for authenticating with steam openid without the use of 3rd party openid packages.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -9,7 +9,8 @@
     "format": "npx prettier --write \"src/**/*.ts\"",
     "lint": "npx eslint \"{src,test}/**/*.ts\" --fix",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prepare": "husky install"
+    "prepare": "npx husky install",
+    "semantic-release": "semantic-release"
   },
   "keywords": [],
   "author": "glencoco",
@@ -19,6 +20,8 @@
     "passport": "^0.6.0"
   },
   "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
     "@types/node": "^20.3.1",
     "@types/passport": "^1.0.12",
     "@typescript-eslint/eslint-plugin": "^5.59.11",
@@ -31,11 +34,16 @@
     "husky": "^8.0.3",
     "lint-staged": "^13.2.2",
     "prettier": "^2.8.8",
+    "semantic-release": "^21.0.5",
     "typescript": "^5.1.3"
   },
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/danocmx/passport-steam-openid.git"
   }
 }
