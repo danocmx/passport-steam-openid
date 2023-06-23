@@ -2,7 +2,7 @@ import 'dotenv/config';
 import passport from 'passport';
 import session from 'express-session';
 import express, { NextFunction, Request, Response } from 'express';
-import { SteamOpenIdError, SteamOpenIdStrategy } from '../../dist'; // TODO: actually install it from npm
+import { SteamOpenIdError, SteamOpenIdStrategy } from 'passport-steam-openid';
 
 const PORT = 3000;
 const URL_BASE =
