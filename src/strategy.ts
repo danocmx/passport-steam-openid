@@ -381,6 +381,13 @@ export class SteamOpenIdStrategy<
           );
         }
 
+        if (user.steamid != steamId) {
+          throw new SteamOpenIdError(
+            'API returned invalid user.',
+            SteamOpenIdErrorType.InvalidSteamId,
+          );
+        }
+
         return user;
       });
   }
