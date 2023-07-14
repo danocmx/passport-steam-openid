@@ -21,6 +21,9 @@ jobs:
       - run: npm run build
         name: Compile library
 
+      - run: npm run test:integration
+        name: Run integration test
+
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
