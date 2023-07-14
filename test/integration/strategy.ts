@@ -97,7 +97,7 @@ describe('SteamOpenIdStrategy Integration Test', () => {
         });
     });
 
-    it('Has invalid response nonce', (done) => {
+    it('Has is_valid set to false', (done) => {
       nock('https://steamcommunity.com')
         .post('/openid/login', validateBody)
         .reply(200, 'ns:http://specs.openid.net/auth/2.0\nis_valid:false\n');
