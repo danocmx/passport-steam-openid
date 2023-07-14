@@ -37,5 +37,5 @@
     "skipDefaultLibCheck": true,
     "skipLibCheck": false
   },
-  "exclude": ["./sample", "./dist"]
+  "exclude": ["./sample", "./dist", "./test"]
 }
