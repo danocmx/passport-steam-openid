@@ -364,7 +364,7 @@ export class SteamOpenIdStrategy<
       key: this.apiKey,
     };
 
-    return axios
+    return this.axios
       .get<SteamPlayerSummaryResponse>(
         `${PLAYER_SUMMARY_URL}/?${qs.stringify(summaryQuery)}`,
       )
