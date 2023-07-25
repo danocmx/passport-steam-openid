@@ -5,7 +5,7 @@ import {
   SteamOpenIdError,
   SteamOpenIdStrategy,
   SteamOpenIdUser,
-} from '../../../dist';
+} from '../../../src';
 
 /**
  * Exported server for superagent.
