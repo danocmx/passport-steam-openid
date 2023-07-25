@@ -3,6 +3,8 @@ Passport strategy for authenticating with steam openid without the use of 3rd pa
 which have been proved to be source of many exploits of steam openid system, apparently by design.
 This package only relies on [passport](https://www.passportjs.org/) and [axios](https://axios-http.com/).
 
+Library is fully covered with tests, both unit and integration tests to make sure everything runs correctly.
+
 ## Usage
 ```ts
 import { SteamOpenIdStrategy } from 'passport-steam-openid';

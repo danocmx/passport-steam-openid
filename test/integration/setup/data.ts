@@ -1,4 +1,4 @@
-import { VALID_NONCE, VALID_OPENID_ENDPOINT } from '../../../dist';
+import { VALID_NONCE, VALID_OPENID_ENDPOINT } from '../../../src';
 
 export const STEAMID = '76561197960435530';
 export const SUCCESSFUL_QUERY: Record<string, string> = {

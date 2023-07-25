@@ -8,7 +8,7 @@ import {
   VALID_ID_SELECT,
   VALID_NONCE,
   VALID_OPENID_ENDPOINT,
-} from '../../dist/constant';
+} from '../../src/constant';
 
 chai.use(chaiHttp);
 chai.should();
