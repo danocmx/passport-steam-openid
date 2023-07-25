@@ -21,6 +21,9 @@ jobs:
       - run: npm run build
         name: Compile library
 
+      - run: npm run test
+        name: Run unit tests
+
       - run: npm run test:integration
         name: Run integration test
 
