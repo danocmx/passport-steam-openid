@@ -59,7 +59,7 @@ Install using npm:
 ```
 npm install passport-steam-openid
 ```
-Released in early stage, library's api is subject to change.
+Library's API has been unchanged and stable for some time now. It will not change unless a breaking change is issued by steam (very unlikely).
 
 ## License
 This library is released under MIT license.
