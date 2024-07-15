@@ -67,11 +67,22 @@ export class SteamOpenIdStrategy<
   protected verify?: VerifyCallback<TUser>;
 
   /**
+   * Optional setting for validating nonce time delay,
+   * in seconds.
+   *
+   * Measures time between nonce creation date and verification.
+   */
+  protected maxNonceTimeDelay: number | undefined;
+
+  /**
    * @constructor
    *
    * @param options.returnURL where steam redirects after parameters are passed
    * @param options.profile if set, we will fetch user's profile from steam api
    * @param options.apiKey api key to fetch user profile, not used if profile is false
+   * @param options.maxNonceTimeDelay optional setting for validating nonce time delay,
+   *  this is just an extra security measure, it is not required nor recommended, but
+   *  might be extra layer of security you want to have.
    * @param verify optional callback, called when user is successfully authenticated
    */
   constructor(options: TOptions, verify?: VerifyCallback<TUser>) {
@@ -81,6 +92,7 @@ export class SteamOpenIdStrategy<
     this.axios = axios.create();
     this.returnURL = options.returnURL;
     this.profile = options.profile;
+    this.maxNonceTimeDelay = options.maxNonceTimeDelay;
     if (options.profile) this.apiKey = options.apiKey;
     if (verify) this.verify = verify;
   }
@@ -151,7 +163,12 @@ export class SteamOpenIdStrategy<
       );
     }
 
-    // TODO: validate nonce time
+    if (this.hasNonceExpired(query)) {
+      throw new SteamOpenIdError(
+        'Nonce time delay was too big.',
+        SteamOpenIdErrorType.NonceExpired,
+      );
+    }
 
     const valid = await this.validateAgainstSteam(query);
     if (!valid) {
@@ -163,6 +180,24 @@ export class SteamOpenIdStrategy<
 
     const steamId = this.getSteamId(query);
     return await this.getUser(steamId);
+  }
+
+  /**
+   * Check if nonce date has expired against current delay setting,
+   * if no setting was set, then it is considered as not expired.
+   *
+   * @param nonceDate date when nonce was created
+   * @returns true, if nonce has expired and error should be thrown
+   */
+  protected hasNonceExpired(query: SteamOpenIdQuery): boolean {
+    if (typeof this.maxNonceTimeDelay == 'undefined') {
+      return false;
+    }
+
+    const nonceDate = new Date(query['openid.response_nonce'].slice(0, 20));
+    const nonceSeconds = Math.floor(nonceDate.getTime() / 1000);
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    return nowSeconds - nonceSeconds > this.maxNonceTimeDelay;
   }
 
   /**

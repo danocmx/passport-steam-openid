@@ -15,7 +15,7 @@ import {
   VALID_OPENID_ENDPOINT,
   PLAYER_SUMMARY_URL,
 } from '../src';
-import { RETURN_URL, query } from './setup/data';
+import { RETURN_URL, getISODate, query } from './setup/data';
 
 chai.use(chaiAsPromised);
 
@@ -214,12 +214,14 @@ describe('SteamOpenIdStrategy Unit Test', () => {
     let getQueryStub: sinon.SinonStub;
     let hasAuthQueryStub: sinon.SinonStub;
     let isQueryValidStub: sinon.SinonStub;
+    let hasNonceExpiredStub: sinon.SinonStub;
     let validateAgainstSteamStub: sinon.SinonStub;
 
     beforeEach(() => {
       getQueryStub = sinon.stub(strategy as any, 'getQuery').returns(query);
       hasAuthQueryStub = sinon.stub(strategy as any, 'hasAuthQuery');
       isQueryValidStub = sinon.stub(strategy as any, 'isQueryValid');
+      hasNonceExpiredStub = sinon.stub(strategy as any, 'hasNonceExpired');
       validateAgainstSteamStub = sinon.stub(
         strategy as any,
         'validateAgainstSteam',
@@ -237,6 +239,7 @@ describe('SteamOpenIdStrategy Unit Test', () => {
       hasAuthQueryStub.returns(true);
       isQueryValidStub.returns(true);
       validateAgainstSteamStub.resolves(true);
+      hasNonceExpiredStub.returns(false);
 
       const steamid = '76561197960435530';
       const user = { steamid: '76561197960435530' };
@@ -253,6 +256,8 @@ describe('SteamOpenIdStrategy Unit Test', () => {
       expect(getUserStub.calledWithExactly(steamid)).equal(true);
       expect(isQueryValidStub.callCount).equal(1);
       expect(isQueryValidStub.calledWithExactly(query)).equal(true);
+      expect(hasNonceExpiredStub.callCount).equal(1);
+      expect(hasNonceExpiredStub.calledWithExactly(query)).equal(true);
       expect(validateAgainstSteamStub.callCount).equal(1);
       expect(validateAgainstSteamStub.calledWithExactly(query)).equal(true);
     });
@@ -269,6 +274,9 @@ describe('SteamOpenIdStrategy Unit Test', () => {
 
       expect(err).to.be.instanceOf(SteamOpenIdError);
       expect(err).to.have.property('code', SteamOpenIdErrorType.InvalidMode);
+      expect(isQueryValidStub.callCount).equal(0);
+      expect(hasNonceExpiredStub.callCount).equal(0);
+      expect(validateAgainstSteamStub.callCount).equal(0);
     });
 
     it('Query is invalid', async () => {
@@ -286,11 +294,35 @@ describe('SteamOpenIdStrategy Unit Test', () => {
       expect(err).to.have.property('code', SteamOpenIdErrorType.InvalidQuery);
       expect(isQueryValidStub.callCount).equal(1);
       expect(isQueryValidStub.calledWithExactly(query)).equal(true);
+      expect(hasNonceExpiredStub.callCount).equal(0);
+      expect(validateAgainstSteamStub.callCount).equal(0);
+    });
+
+    it('Nonce has expired', async () => {
+      hasAuthQueryStub.returns(true);
+      isQueryValidStub.returns(true);
+      hasNonceExpiredStub.returns(true);
+
+      let err: any;
+      try {
+        await strategy.handleRequest(request);
+      } catch (e) {
+        err = e;
+      }
+
+      expect(err).to.be.instanceOf(SteamOpenIdError);
+      expect(err).to.have.property('code', SteamOpenIdErrorType.NonceExpired);
+      expect(isQueryValidStub.callCount).equal(1);
+      expect(isQueryValidStub.calledWithExactly(query)).equal(true);
+      expect(hasNonceExpiredStub.callCount).equal(1);
+      expect(hasNonceExpiredStub.calledWithExactly(query)).equal(true);
+      expect(validateAgainstSteamStub.callCount).equal(0);
     });
 
     it('Steam rejects this authentication request', async () => {
       hasAuthQueryStub.returns(true);
       isQueryValidStub.returns(true);
+      hasNonceExpiredStub.returns(false);
       validateAgainstSteamStub.resolves(false);
 
       let err: any;
@@ -304,6 +336,8 @@ describe('SteamOpenIdStrategy Unit Test', () => {
       expect(err).to.have.property('code', SteamOpenIdErrorType.Unauthorized);
       expect(isQueryValidStub.callCount).equal(1);
       expect(isQueryValidStub.calledWithExactly(query)).equal(true);
+      expect(hasNonceExpiredStub.callCount).equal(1);
+      expect(hasNonceExpiredStub.calledWithExactly(query)).equal(true);
       expect(validateAgainstSteamStub.callCount).equal(1);
       expect(validateAgainstSteamStub.calledWithExactly(query)).equal(true);
     });
@@ -720,6 +754,42 @@ describe('SteamOpenIdStrategy Unit Test', () => {
 
       expect(err).instanceOf(SteamOpenIdError);
       expect(err).to.have.property('code', SteamOpenIdErrorType.InvalidSteamId);
+    });
+  });
+
+  describe('hasNonceExpired', () => {
+    const HOUR = 1000 * 60 * 60;
+
+    it('No setting set, could not expire', () => {
+      expect(strategy['hasNonceExpired'](query.properties)).equal(false);
+    });
+
+    it('Setting set, nonce expired', () => {
+      strategy['maxNonceTimeDelay'] = HOUR / 1000;
+
+      expect(
+        strategy['hasNonceExpired'](
+          query.change({
+            'openid.response_nonce': `${getISODate(
+              new Date(Date.now() - 2 * HOUR),
+            )}8df86bac92ad1addaf3735a5aabdc6e2a7`,
+          }),
+        ),
+      ).equal(true);
+    });
+
+    it('Setting set, nonce not expired', () => {
+      strategy['maxNonceTimeDelay'] = HOUR / 1000;
+
+      expect(
+        strategy['hasNonceExpired'](
+          query.change({
+            'openid.response_nonce': `${getISODate(
+              new Date(Date.now() + HOUR / 2),
+            )}8df86bac92ad1addaf3735a5aabdc6e2a7`,
+          }),
+        ),
+      ).equal(false);
     });
   });
 });
