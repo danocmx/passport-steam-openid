@@ -399,31 +399,29 @@ export class SteamOpenIdStrategy<
       key: this.apiKey,
     };
 
-    return this.axios
-      .get<SteamPlayerSummaryResponse>(
-        `${PLAYER_SUMMARY_URL}/?${qs.stringify(summaryQuery)}`,
-      )
-      .then(({ data }) => {
-        if (!Array.isArray(data?.response?.players)) {
-          throw new Error('Malformed response from steam.');
-        }
+    const { data } = await this.axios.get<SteamPlayerSummaryResponse>(
+      `${PLAYER_SUMMARY_URL}/?${qs.stringify(summaryQuery)}`,
+    );
 
-        const user = data.response.players[0];
-        if (!user) {
-          throw new SteamOpenIdError(
-            'Profile was not found on steam.',
-            SteamOpenIdErrorType.InvalidSteamId,
-          );
-        }
+    if (!Array.isArray(data?.response?.players)) {
+      throw new Error('Malformed response from steam.');
+    }
 
-        if (user.steamid != steamId) {
-          throw new SteamOpenIdError(
-            'API returned invalid user.',
-            SteamOpenIdErrorType.InvalidSteamId,
-          );
-        }
+    const user = data.response.players[0];
+    if (!user) {
+      throw new SteamOpenIdError(
+        'Profile was not found on steam.',
+        SteamOpenIdErrorType.InvalidSteamId,
+      );
+    }
 
-        return user;
-      });
+    if (user.steamid != steamId) {
+      throw new SteamOpenIdError(
+        'API returned invalid user.',
+        SteamOpenIdErrorType.InvalidSteamId,
+      );
+    }
+
+    return user;
   }
 }
