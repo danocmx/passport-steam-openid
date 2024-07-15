@@ -68,7 +68,7 @@ export class SteamOpenIdStrategy<
 
   /**
    * Optional setting for validating nonce time delay,
-   * in miliseconds.
+   * in seconds.
    *
    * Measures time between nonce creation date and verification.
    */
@@ -80,6 +80,9 @@ export class SteamOpenIdStrategy<
    * @param options.returnURL where steam redirects after parameters are passed
    * @param options.profile if set, we will fetch user's profile from steam api
    * @param options.apiKey api key to fetch user profile, not used if profile is false
+   * @param options.maxNonceTimeDelay optional setting for validating nonce time delay,
+   *  this is just an extra security measure, it is not required nor recommended, but
+   *  might be extra layer of security you want to have.
    * @param verify optional callback, called when user is successfully authenticated
    */
   constructor(options: TOptions, verify?: VerifyCallback<TUser>) {
@@ -187,12 +190,14 @@ export class SteamOpenIdStrategy<
    * @returns true, if nonce has expired and error should be thrown
    */
   protected hasNonceExpired(query: SteamOpenIdQuery): boolean {
-    if (!this.maxNonceTimeDelay) {
+    if (typeof this.maxNonceTimeDelay == 'undefined') {
       return false;
     }
 
-    const nonceDate = new Date(query['openid.response_nonce'].slice(0, 24));
-    return Date.now() - nonceDate.getTime() > this.maxNonceTimeDelay;
+    const nonceDate = new Date(query['openid.response_nonce'].slice(0, 20));
+    const nonceSeconds = Math.floor(nonceDate.getTime() / 1000);
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    return nowSeconds - nonceSeconds > this.maxNonceTimeDelay;
   }
 
   /**

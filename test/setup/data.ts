@@ -6,6 +6,8 @@ import {
 
 export const RETURN_URL = '/auth/steam';
 
+export const getISODate = (date: Date) => date.toISOString().split('.')[0] + 'Z';
+
 export const query: {
   properties: SteamOpenIdQuery;
   get(): SteamOpenIdQuery;
@@ -22,7 +24,7 @@ export const query: {
     'openid.claimed_id': `https://steamcommunity.com/openid/id/76561197960435530`,
     'openid.return_to': RETURN_URL,
     'openid.op_endpoint': VALID_OPENID_ENDPOINT,
-    'openid.response_nonce': `${new Date().toJSON()}8df86bac92ad1addaf3735a5aabdc6e2a7`,
+    'openid.response_nonce': `${getISODate(new Date())}8df86bac92ad1addaf3735a5aabdc6e2a7`,
     'openid.assoc_handle': '1234567890',
     'openid.signed':
       'signed,op_endpoint,claimed_id,identity,return_to,response_nonce,assoc_handle',

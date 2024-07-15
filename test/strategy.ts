@@ -15,7 +15,7 @@ import {
   VALID_OPENID_ENDPOINT,
   PLAYER_SUMMARY_URL,
 } from '../src';
-import { RETURN_URL, query } from './setup/data';
+import { RETURN_URL, getISODate, query } from './setup/data';
 
 chai.use(chaiAsPromised);
 
@@ -765,27 +765,28 @@ describe('SteamOpenIdStrategy Unit Test', () => {
     });
 
     it('Setting set, nonce expired', () => {
-      strategy['maxNonceTimeDelay'] = HOUR;
+      strategy['maxNonceTimeDelay'] = HOUR / 1000;
 
       expect(
         strategy['hasNonceExpired'](
           query.change({
-            'openid.response_nonce': `${new Date(
-              Date.now() - 2 * HOUR,
-            ).toJSON()}8df86bac92ad1addaf3735a5aabdc6e2a7`,
+            'openid.response_nonce': `${getISODate(
+              new Date(Date.now() - 2 * HOUR),
+            )}8df86bac92ad1addaf3735a5aabdc6e2a7`,
           }),
         ),
       ).equal(true);
     });
 
     it('Setting set, nonce not expired', () => {
-      strategy['maxNonceTimeDelay'] = 1000 * 60 * 60;
+      strategy['maxNonceTimeDelay'] = HOUR / 1000;
+
       expect(
         strategy['hasNonceExpired'](
           query.change({
-            'openid.response_nonce': `${new Date(
-              Date.now() - HOUR / 2,
-            ).toJSON()}8df86bac92ad1addaf3735a5aabdc6e2a7`,
+            'openid.response_nonce': `${getISODate(
+              new Date(Date.now() + HOUR / 2),
+            )}8df86bac92ad1addaf3735a5aabdc6e2a7`,
           }),
         ),
       ).equal(false);

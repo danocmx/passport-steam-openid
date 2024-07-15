@@ -4,7 +4,12 @@ export type BaseSteamOpenIdStrategyOptions = {
   returnURL: string;
   /**
    * Maximum time delay between the nonce creation and the nonce verification,
-   * in miliseconds.
+   * in seconds.
+   *
+   * nonce includes a timestamp we can validate against the current time,
+   * while the steam server validates this as well, you might want to
+   * set maximum number of seconds between the nonce creation and the nonce
+   * verification.
    */
   maxNonceTimeDelay?: number;
 };
