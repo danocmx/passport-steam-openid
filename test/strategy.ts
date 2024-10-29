@@ -14,6 +14,7 @@ import {
   OPENID_QUERY_PROPS,
   VALID_OPENID_ENDPOINT,
   PLAYER_SUMMARY_URL,
+  VALID_SIGNED_FIELD,
 } from '../src';
 import { RETURN_URL, getISODate, query } from './setup/data';
 
@@ -414,6 +415,8 @@ describe('SteamOpenIdStrategy Unit Test', () => {
         'openid.identity': VALID_ID_SELECT,
         'openid.claimed_id': VALID_ID_SELECT,
         'openid.return_to': RETURN_URL,
+        'openid.assoc': '',
+        'openid.signed': VALID_SIGNED_FIELD,
       };
 
       url.searchParams.forEach((value, name) => {
