@@ -5,10 +5,12 @@ import { SteamOpenIdError } from './error';
 import {
   OPENID_QUERY_PROPS,
   PLAYER_SUMMARY_URL,
+  VALID_ASSOC_HANDLE,
   VALID_IDENTITY_ENDPOINT,
   VALID_ID_SELECT,
   VALID_NONCE,
   VALID_OPENID_ENDPOINT,
+  VALID_SIGNED_FIELD,
 } from './constant';
 import {
   SteamOpenIdUserProfile,
@@ -269,15 +271,25 @@ export class SteamOpenIdStrategy<
    */
   protected isQueryValid(query: ParsedUrlQuery): query is SteamOpenIdQuery {
     for (const key of OPENID_QUERY_PROPS) {
+      // Every prop has to be present
       if (!query[key]) {
         return false;
       }
     }
 
-    if (query['openid.ns'] != VALID_NONCE) return false;
-    if (query['openid.op_endpoint'] != VALID_OPENID_ENDPOINT) return false;
+    for (const key of Object.keys(query)) {
+      // Do not allow any extra properties
+      if (!OPENID_QUERY_PROPS.includes(key as any)) {
+        return false;
+      }
+    }
+
+    if (query['openid.ns'] !== VALID_NONCE) return false;
+    if (query['openid.op_endpoint'] !== VALID_OPENID_ENDPOINT) return false;
     if (query['openid.claimed_id'] !== query['openid.identity']) return false;
     if (!this.isValidIdentity(query['openid.claimed_id'])) return false;
+    if (query['openid.assoc_handle'] !== VALID_ASSOC_HANDLE) return false;
+    if (query['openid.signed'] !== VALID_SIGNED_FIELD) return false;
     return query['openid.return_to'] == this.returnURL;
   }
 
