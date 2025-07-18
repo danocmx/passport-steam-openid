@@ -15,7 +15,7 @@
     "test:coverage": "npx nyc --reporter=text \"npm run test:integration && npm run test\"",
     "test:coverage:html": "npx nyc --reporter=html \"npm run test:integration && npm run test\""
   },
-  "keywords": [],
+  "keywords": ["steam", "auth", "passport"],
   "author": "glencoco",
   "license": "MIT",
   "dependencies": {
