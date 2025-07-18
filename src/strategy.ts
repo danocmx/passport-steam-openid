@@ -322,8 +322,8 @@ export class SteamOpenIdStrategy<
         maxRedirects: 0,
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Origin': 'https://steamcommunity.com',
-          'Referer': 'https://steamcommunity.com',
+          Origin: 'https://steamcommunity.com',
+          Referer: 'https://steamcommunity.com',
         },
       })
       .then(({ data, status }) => {
