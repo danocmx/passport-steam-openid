@@ -1,7 +1,8 @@
 # passport-steam-openid
 Passport strategy for authenticating with steam openid without the use of 3rd party openid packages,
 which have been proved to be source of many exploits of steam openid system, apparently by design.
-This package only relies on [passport](https://www.passportjs.org/) and [axios](https://axios-http.com/).
+This package only relies on [passport](https://www.passportjs.org/), optionally on [axios](https://axios-http.com/),
+as it is the default http client, you can add your own implementation for extra security.
 
 Library is fully covered with tests, both unit and integration tests to make sure everything runs correctly.
 
@@ -17,6 +18,7 @@ Options object has the following properties:
 - `profile` - If set to true, it will fetch user profile from steam api, otherwise only steamid will be returned
 - `apiKey` - Steam api key, required if `options.profile` is set to true
 - `maxNonceTimeDelay` - Optional, in seconds, time between creation and verification of nonce date, if not set no verification occurs.
+- `httpClient` - Optional, you can implement `IAxiosLikeHttpClient` interface for your own http client
 
 Second parameter of `SteamOpenIdStrategy` is a callback function used for verifying logged in user, with the following parameters:
 - `req` - Express request object
