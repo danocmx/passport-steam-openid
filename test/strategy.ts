@@ -533,7 +533,7 @@ describe('SteamOpenIdStrategy Unit Test', () => {
     const body = 'body';
 
     beforeEach(() => {
-      axiosPostStub = sinon.stub(strategy['axios'], 'post');
+      axiosPostStub = sinon.stub(strategy['http'], 'post');
       getOpenIdValidationRequestBodyStub = sinon
         .stub(strategy as any, 'getOpenIdValidationRequestBody')
         .returns(body);
@@ -689,7 +689,7 @@ describe('SteamOpenIdStrategy Unit Test', () => {
         returnURL: RETURN_URL,
       });
 
-      axiosGetStub = sinon.stub(strategy['axios'], 'get');
+      axiosGetStub = sinon.stub(strategy['http'], 'get');
     });
 
     afterEach(() => {

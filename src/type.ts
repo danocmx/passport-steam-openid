@@ -1,5 +1,25 @@
 import { DoneCallback } from 'passport';
 
+export type HttpOpts = {
+  maxRedirects?: number;
+  params?: Record<string, any>;
+  headers?: Record<string, any>;
+};
+
+export type HttpRes<TResponse> = {
+  data: TResponse;
+  status?: number;
+};
+
+export interface IAxiosLikeHttpClient {
+  get<TResponse>(url: string, opts?: HttpOpts): Promise<HttpRes<TResponse>>;
+  post<TResponse>(
+    url: string,
+    data?: any,
+    opts?: HttpOpts,
+  ): Promise<HttpRes<TResponse>>;
+}
+
 export type BaseSteamOpenIdStrategyOptions = {
   returnURL: string;
   /**
@@ -12,6 +32,7 @@ export type BaseSteamOpenIdStrategyOptions = {
    * verification.
    */
   maxNonceTimeDelay?: number;
+  httpClient?: IAxiosLikeHttpClient;
 };
 
 export type SteamOpenIdStrategyOptionsWithProfile = {

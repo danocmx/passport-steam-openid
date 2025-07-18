@@ -1,5 +1,4 @@
 import qs, { ParsedUrlQuery } from 'querystring';
-import axios, { AxiosInstance } from 'axios';
 import { Strategy } from 'passport';
 import { SteamOpenIdError } from './error';
 import {
@@ -21,6 +20,7 @@ import {
   SteamOpenIdStrategyOptionsWithProfile,
   SteamOpenIdStrategyOptionsWithoutProfile,
   VerifyCallback,
+  IAxiosLikeHttpClient,
 } from './type';
 
 /**
@@ -44,7 +44,7 @@ export class SteamOpenIdStrategy<
   /**
    * Axios instance used for validating the request and fetching profile.
    */
-  protected readonly axios: AxiosInstance;
+  protected readonly http: IAxiosLikeHttpClient;
 
   /**
    * Where in your app, you want to return to from steam.
@@ -91,12 +91,30 @@ export class SteamOpenIdStrategy<
     super();
 
     this.name = 'steam-openid';
-    this.axios = axios.create();
     this.returnURL = options.returnURL;
     this.profile = options.profile;
     this.maxNonceTimeDelay = options.maxNonceTimeDelay;
     if (options.profile) this.apiKey = options.apiKey;
     if (verify) this.verify = verify;
+
+    if (options.httpClient) {
+      this.http = options.httpClient;
+    } else {
+      try {
+        // Eslint was throwing schema errors at me, so it's just excluded here
+        // instead of the config
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const axios = require('axios');
+
+        this.http = axios.create();
+      } catch (e) {
+        throw new Error(
+          'Could not import axios as the default http client, either\n' +
+            ' - run `npm install axios`\n' +
+            ' - implement `IAxiosLikeHttpClient` interface and pass it as `httpClient` option\n',
+        );
+      }
+    }
   }
 
   /**
@@ -317,7 +335,7 @@ export class SteamOpenIdStrategy<
    * @returns false, if request failed, status is incorrect or data signals invalid
    */
   protected validateAgainstSteam(query: SteamOpenIdQuery): Promise<boolean> {
-    return this.axios
+    return this.http
       .post(VALID_OPENID_ENDPOINT, this.getOpenIdValidationRequestBody(query), {
         maxRedirects: 0,
         headers: {
@@ -413,7 +431,7 @@ export class SteamOpenIdStrategy<
       key: this.apiKey,
     };
 
-    const { data } = await this.axios.get<SteamPlayerSummaryResponse>(
+    const { data } = await this.http.get<SteamPlayerSummaryResponse>(
       `${PLAYER_SUMMARY_URL}/?${qs.stringify(summaryQuery)}`,
     );
 
