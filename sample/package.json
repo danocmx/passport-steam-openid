@@ -14,7 +14,7 @@
   "dependencies": {
     "dotenv": "^16.3.1",
     "express": "^4.21.2",
-    "express-session": "^1.18.1",
+    "express-session": "^1.18.2",
     "passport": "^0.6.0",
     "passport-steam-openid": "^1.0.0"
   },
