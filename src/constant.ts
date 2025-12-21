@@ -22,3 +22,5 @@ export const VALID_OPENID_ENDPOINT = 'https://steamcommunity.com/openid/login';
 export const PLAYER_SUMMARY_URL = 'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2';
 export const VALID_ASSOC_HANDLE = '1234567890';
 export const VALID_SIGNED_FIELD = 'signed,op_endpoint,claimed_id,identity,return_to,response_nonce,assoc_handle';
+
+export const HTTP_OK = 200;

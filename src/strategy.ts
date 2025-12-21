@@ -2,6 +2,7 @@ import qs, { ParsedUrlQuery } from 'querystring';
 import { Strategy } from 'passport';
 import { SteamOpenIdError } from './error';
 import {
+  HTTP_OK,
   OPENID_QUERY_PROPS,
   PLAYER_SUMMARY_URL,
   VALID_ASSOC_HANDLE,
@@ -345,7 +346,7 @@ export class SteamOpenIdStrategy<
         },
       })
       .then(({ data, status }) => {
-        if (status !== 200) {
+        if (status !== HTTP_OK) {
           return false;
         }
 
