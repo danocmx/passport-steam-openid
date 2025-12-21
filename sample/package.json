@@ -1,7 +1,7 @@
 {
   "name": "passport-steam-openid-sample",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Sample application that uses passport-steam-openid.",
   "main": "./dist/app.js",
   "scripts": {
@@ -16,7 +16,7 @@
     "express": "^4.21.2",
     "express-session": "^1.18.2",
     "passport": "^0.6.0",
-    "passport-steam-openid": "^1.0.0"
+    "passport-steam-openid": "^1.1.9"
   },
   "devDependencies": {
     "@types/express": "^4.17.17",
