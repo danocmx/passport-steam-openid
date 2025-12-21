@@ -8,7 +8,7 @@
     "declarationMap": true,
     "outDir": "./dist",
     "removeComments": false,
-    "importHelpers": true,
+    "importHelpers": false,
     "newLine": "lf",
     "preserveConstEnums": true,
     "preserveValueImports": false,
