@@ -35,7 +35,8 @@
     "allowUnusedLabels": false,
     "allowUnreachableCode": false,
     "skipDefaultLibCheck": true,
-    "skipLibCheck": false
+    "skipLibCheck": false,
+    "types": ["mocha", "node"]
   },
   "exclude": ["./sample", "./dist", "./test"]
 }

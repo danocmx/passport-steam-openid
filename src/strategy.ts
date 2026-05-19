@@ -23,6 +23,7 @@ import {
   VerifyCallback,
   IAxiosLikeHttpClient,
 } from './type';
+import { FetchHttpClient } from './http';
 
 /**
  * Strategy that authenticates you via steam openid without the use of any external openid libraries,
@@ -101,20 +102,7 @@ export class SteamOpenIdStrategy<
     if (options.httpClient) {
       this.http = options.httpClient;
     } else {
-      try {
-        // Eslint was throwing schema errors at me, so it's just excluded here
-        // instead of the config
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const axios = require('axios');
-
-        this.http = axios.create();
-      } catch (e) {
-        throw new Error(
-          'Could not import axios as the default http client, either\n' +
-            ' - run `npm install axios`\n' +
-            ' - implement `IAxiosLikeHttpClient` interface and pass it as `httpClient` option\n',
-        );
-      }
+      this.http = new FetchHttpClient();
     }
   }
 
