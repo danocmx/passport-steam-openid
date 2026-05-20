@@ -1,6 +1,7 @@
 import chai, { expect } from 'chai';
 import chaiHttp from 'chai-http';
 import nock from 'nock';
+import fetchMock from 'fetch-mock';
 
 import { server } from './setup/server';
 import { STEAMID, SUCCESSFUL_QUERY, validateBody } from './setup/data';
@@ -14,22 +15,40 @@ chai.use(chaiHttp);
 chai.should();
 
 describe('SteamOpenIdStrategy Integration Test', () => {
+  afterEach(() => {
+    fetchMock.unmockGlobal();
+  });
+
   it('Successfully receives a redirect from steam', (done) => {
     const response = '<h1>Successful redirect to steam</h1>';
 
     nock('https://steamcommunity.com')
       .get('/openid/login')
-      .query((query) => {
-        return (
-          query['openid.mode'] === 'checkid_setup' &&
-          query['openid.ns'] === VALID_NONCE &&
-          query['openid.identity'] === VALID_ID_SELECT &&
-          query['openid.claimed_id'] === VALID_ID_SELECT &&
-          query['openid.return_to'] === '/auth/steam'
-        );
-      })
-      .reply(200, response, {
-        'Content-Type': 'text/plain',
+      .query(true)
+      .reply((uri) => {
+        const url = new URL(uri, 'https://steamcommunity.com');
+        if (
+          url.searchParams.get('openid.mode') === 'checkid_setup' &&
+          url.searchParams.get('openid.ns') === VALID_NONCE &&
+          url.searchParams.get('openid.identity') === VALID_ID_SELECT &&
+          url.searchParams.get('openid.claimed_id') === VALID_ID_SELECT &&
+          url.searchParams.get('openid.return_to') === '/auth/steam'
+        ) {
+          return [
+            200,
+            response,
+            {
+              'Content-Type': 'text/plain',
+            },
+          ];
+        }
+        return [
+          401,
+          'Fail',
+          {
+            'Content-Type': 'text/plain',
+          },
+        ];
       });
 
     chai
@@ -53,9 +72,34 @@ describe('SteamOpenIdStrategy Integration Test', () => {
 
   it('Successfully authenticates a valid user', (done) => {
     nock('https://steamcommunity.com')
-      .post('/openid/login', validateBody)
+      .post('/openid/login')
+      .query(true)
       .matchHeader('Content-Type', 'application/x-www-form-urlencoded')
-      .reply(200, 'ns:http://specs.openid.net/auth/2.0\nis_valid:true\n');
+      .reply(() => {
+        return [200, 'ns:http://specs.openid.net/auth/2.0\nis_valid:true\n'];
+      });
+
+    fetchMock
+      .mockGlobal()
+      .route('https://steamcommunity.com/openid/login', (args) => {
+        const headers = args.options.headers!;
+        let found = false;
+        for (const [name, value] of Object.entries(headers)) {
+          if (typeof name != 'string') {
+            continue;
+          }
+
+          if (name === 'content-type' && value === 'application/x-www-form-urlencoded') {
+            found = true;
+          }
+        }
+
+        if (args.options.method !== 'post' || !found) {
+          return { status: 400, body: 'failed' };
+        }
+
+        return ({ status: 200, body: 'ns:http://specs.openid.net/auth/2.0\nis_valid:true\n' })
+    });
 
     chai
       .request(server)
