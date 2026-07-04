@@ -107,7 +107,7 @@ export class SteamOpenIdStrategy<
   }
 
   /**
-   * Passport handle for authentication. We handle the query, passport does rest.
+   * Passport handle for authentication. We handle the query, passport does the rest.
    *
    * @param req Base IncommingMessage request enhanced with parsed querystring.
    */
