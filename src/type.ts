@@ -11,6 +11,11 @@ export type HttpRes<TResponse> = {
   status?: number;
 };
 
+/**
+ * Unified interface for http requests,
+ * uses axios-like methods, because it was
+ * the initial http client that was used.
+ */
 export interface IAxiosLikeHttpClient {
   get<TResponse>(url: string, opts?: HttpOpts): Promise<HttpRes<TResponse>>;
   post<TResponse>(
