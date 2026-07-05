@@ -36,7 +36,7 @@
     "allowUnreachableCode": false,
     "skipDefaultLibCheck": true,
     "skipLibCheck": false,
-    "types": ["mocha", "node"]
+    "types": ["node"]
   },
   "exclude": ["./sample", "./dist", "./test"]
 }

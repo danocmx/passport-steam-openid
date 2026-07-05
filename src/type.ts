@@ -136,3 +136,9 @@ export type SteamOpenIdQuery = {
   'openid.signed': string;
   'openid.sig': string;
 };
+
+export enum OpenIdMode {
+  CheckAuthentication = 'check_authentication',
+  IdResolution = 'id_res',
+  CheckIdSetup = 'checkid_setup',
+}

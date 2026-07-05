@@ -10,8 +10,8 @@
     "lint": "npx eslint \"{src,test}/**/*.ts\" --fix",
     "prepare": "npx husky install",
     "semantic-release": "semantic-release",
-    "test": "npx mocha -r ts-node/register 'test/*.ts'",
-    "test:integration": "npx mocha -r ts-node/register 'test/integration/*.ts'",
+    "test": "npx ts-node --project test/tsconfig.json ./node_modules/mocha/bin/mocha.js \"test/*.ts\"",
+    "test:integration": "npx ts-node --project test/tsconfig.json ./node_modules/mocha/bin/mocha.js \"test/integration/*.ts\"",
     "test:coverage": "npx nyc --reporter=text \"npm run test:integration && npm run test\"",
     "test:coverage:html": "npx nyc --reporter=html \"npm run test:integration && npm run test\""
   },

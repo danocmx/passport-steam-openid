@@ -22,6 +22,7 @@ import {
   SteamOpenIdStrategyOptionsWithoutProfile,
   VerifyCallback,
   IAxiosLikeHttpClient,
+  OpenIdMode,
 } from './type';
 import { FetchHttpClient } from './http';
 
@@ -248,7 +249,9 @@ export class SteamOpenIdStrategy<
    * @returns false, if mode is incorrect
    */
   protected hasAuthQuery(query: ParsedUrlQuery) {
-    return !!query['openid.mode'] && query['openid.mode'] == 'id_res';
+    return (
+      !!query['openid.mode'] && query['openid.mode'] == OpenIdMode.IdResolution
+    );
   }
 
   /**
@@ -258,7 +261,7 @@ export class SteamOpenIdStrategy<
    */
   public buildRedirectUrl() {
     const openIdParams = {
-      'openid.mode': 'checkid_setup',
+      'openid.mode': OpenIdMode.CheckIdSetup,
       'openid.ns': VALID_NONCE,
       'openid.identity': VALID_ID_SELECT,
       'openid.claimed_id': VALID_ID_SELECT,
@@ -352,7 +355,7 @@ export class SteamOpenIdStrategy<
    */
   protected getOpenIdValidationRequestBody(query: SteamOpenIdQuery) {
     const data = { ...query };
-    data['openid.mode'] = 'check_authentication';
+    data['openid.mode'] = OpenIdMode.CheckAuthentication;
     return qs.stringify(data);
   }
 
