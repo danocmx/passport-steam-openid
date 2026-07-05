@@ -22,7 +22,9 @@ import {
   SteamOpenIdStrategyOptionsWithoutProfile,
   VerifyCallback,
   IAxiosLikeHttpClient,
+  OpenIdMode,
 } from './type';
+import { FetchHttpClient } from './http';
 
 /**
  * Strategy that authenticates you via steam openid without the use of any external openid libraries,
@@ -101,25 +103,12 @@ export class SteamOpenIdStrategy<
     if (options.httpClient) {
       this.http = options.httpClient;
     } else {
-      try {
-        // Eslint was throwing schema errors at me, so it's just excluded here
-        // instead of the config
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const axios = require('axios');
-
-        this.http = axios.create();
-      } catch (e) {
-        throw new Error(
-          'Could not import axios as the default http client, either\n' +
-            ' - run `npm install axios`\n' +
-            ' - implement `IAxiosLikeHttpClient` interface and pass it as `httpClient` option\n',
-        );
-      }
+      this.http = new FetchHttpClient();
     }
   }
 
   /**
-   * Passport handle for authentication. We handle the query, passport does rest.
+   * Passport handle for authentication. We handle the query, passport does the rest.
    *
    * @param req Base IncommingMessage request enhanced with parsed querystring.
    */
@@ -260,7 +249,9 @@ export class SteamOpenIdStrategy<
    * @returns false, if mode is incorrect
    */
   protected hasAuthQuery(query: ParsedUrlQuery) {
-    return !!query['openid.mode'] && query['openid.mode'] == 'id_res';
+    return (
+      !!query['openid.mode'] && query['openid.mode'] == OpenIdMode.IdResolution
+    );
   }
 
   /**
@@ -270,7 +261,7 @@ export class SteamOpenIdStrategy<
    */
   public buildRedirectUrl() {
     const openIdParams = {
-      'openid.mode': 'checkid_setup',
+      'openid.mode': OpenIdMode.CheckIdSetup,
       'openid.ns': VALID_NONCE,
       'openid.identity': VALID_ID_SELECT,
       'openid.claimed_id': VALID_ID_SELECT,
@@ -364,7 +355,7 @@ export class SteamOpenIdStrategy<
    */
   protected getOpenIdValidationRequestBody(query: SteamOpenIdQuery) {
     const data = { ...query };
-    data['openid.mode'] = 'check_authentication';
+    data['openid.mode'] = OpenIdMode.CheckAuthentication;
     return qs.stringify(data);
   }
 

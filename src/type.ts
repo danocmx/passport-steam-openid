@@ -11,6 +11,11 @@ export type HttpRes<TResponse> = {
   status?: number;
 };
 
+/**
+ * Unified interface for http requests,
+ * uses axios-like methods, because it was
+ * the initial http client that was used.
+ */
 export interface IAxiosLikeHttpClient {
   get<TResponse>(url: string, opts?: HttpOpts): Promise<HttpRes<TResponse>>;
   post<TResponse>(
@@ -131,3 +136,9 @@ export type SteamOpenIdQuery = {
   'openid.signed': string;
   'openid.sig': string;
 };
+
+export enum OpenIdMode {
+  CheckAuthentication = 'check_authentication',
+  IdResolution = 'id_res',
+  CheckIdSetup = 'checkid_setup',
+}
