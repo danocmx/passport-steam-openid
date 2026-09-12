@@ -57,7 +57,12 @@ export class FetchHttpClient implements IAxiosLikeHttpClient {
   private async getBody<T>(
     res: Response,
   ): Promise<{ status: number; data: T }> {
-    if (res.headers.get('Content-Type') == 'text/json') {
+    const contentType = (res.headers.get('Content-Type') || '').toLowerCase();
+
+    if (
+      contentType.includes('text/json') ||
+      contentType.includes('application/json')
+    ) {
       return {
         data: (await res.json()) as any,
         status: res.status,
